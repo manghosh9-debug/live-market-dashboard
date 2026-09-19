@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="bn"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#07101d"><link rel="manifest" href="/manifest.json"><title>Live Market Dashboard</title>
+<style>
+*{box-sizing:border-box}body{margin:0;background:#07101d;color:#eaf1fb;font-family:Arial,sans-serif}
+header{position:sticky;top:0;background:#0b1728;border-bottom:1px solid #223650;padding:14px;z-index:5}
+h1{font-size:20px;margin:0}.sub{font-size:11px;color:#8da2bd;margin-top:4px}.wrap{max-width:1200px;margin:auto;padding:12px}
+.controls{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px}input,select,button{background:#0d1b2f;color:#eaf1fb;border:1px solid #29405e;border-radius:9px;padding:10px}
+input{flex:1;min-width:180px}button{cursor:pointer}.tabs{display:flex;gap:7px;overflow:auto;margin-bottom:12px}.active{background:#2563eb}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(290px,1fr));gap:10px}.card{background:#0c182a;border:1px solid #203550;border-radius:12px;padding:13px}
+.row{display:flex;justify-content:space-between;gap:8px}.muted{color:#8da2bd;font-size:11px}.title{font-weight:700;margin:9px 0;line-height:1.35}
+.green{color:#32d583}.red{color:#ff637b}.yellow{color:#ffd166}.pill{font-size:10px;background:#17304d;border-radius:6px;padding:4px 7px}
+.status{font-size:12px;margin:8px 0 12px}.empty{padding:35px;text-align:center;color:#8da2bd;border:1px dashed #29405e;border-radius:12px}
+</style></head>
+<body>
+<header><h1>📡 LIVE MARKET DASHBOARD</h1><div class="sub">Live News • Price • Volume • Scanner</div></header>
+<div class="wrap">
+<div class="controls"><input id="q" placeholder="Search stock / news…"><select id="s"><option value="all">All</option><option value="positive">🟢 Positive</option><option value="negative">🔴 Negative</option><option value="neutral">🟡 Neutral</option></select><button onclick="load()">↻ Refresh</button><button onclick="notify()">🔔 Alerts</button></div>
+<div class="tabs"><button class="active" data-f="all">ALL</button><button data-f="breaking">🚨 BREAKING</button><button data-f="positive">🟢 POSITIVE</button><button data-f="negative">🔴 NEGATIVE</button></div>
+<div id="status" class="status muted">Connecting to live backend…</div><div id="news" class="grid"></div>
+<p class="muted">Live mode requires a backend with licensed market/news API credentials. Demo mode is shown until the backend is connected.</p>
+</div>
+<script>
+let filter='all', cache=[];
+const demo=[
+{stock:'HINDALCO',title:'New order / contract announcement',source:'Demo Feed',time:'10:42',sent:'positive',type:'breaking',move:'+2.15%',vol:'+184%'},
+{stock:'TATA MOTORS',title:'Company announcement and market update',source:'Demo Feed',time:'10:38',sent:'positive',type:'positive',move:'+1.42%',vol:'+96%'},
+{stock:'ABC LTD',title:'Regulatory development reported',source:'Demo Feed',time:'10:31',sent:'negative',type:'negative',move:'-3.10%',vol:'+240%'}
+];
+function draw(){
+let q=document.getElementById('q').value.toLowerCase(),s=document.getElementById('s').value;
+let a=(cache.length?cache:demo).filter(x=>(filter==='all'||x.type===filter)&&(s==='all'||x.sent===s)&&((x.stock+x.title).toLowerCase().includes(q)));
+document.getElementById('news').innerHTML=a.length?a.map(x=>`<article class="card"><div class="row"><b>${x.stock}</b><span class="pill">${x.time||''}</span></div><div class="title">${x.title}</div><div class="muted">${x.source||''} • <span class="${x.sent==='positive'?'green':x.sent==='negative'?'red':'yellow'}">${(x.sent||'neutral').toUpperCase()}</span></div><div class="row" style="margin-top:11px"><span>Price <b class="${(x.move||'')[0]=='+'?'green':'red'}">${x.move||'—'}</b></span><span>Volume <b>${x.vol||'—'}</b></span></div></article>`).join(''):'<div class="empty">কোনো খবর পাওয়া যায়নি।</div>';
+}
+async function load(){
+try{let r=await fetch('/api/dashboard');if(!r.ok)throw 0;let d=await r.json();cache=d.news||[];document.getElementById('status').textContent='🟢 LIVE • Updated '+new Date().toLocaleTimeString();}catch(e){cache=[];document.getElementById('status').textContent='🟡 Demo mode • Live API/backend not connected';}draw();}
+function notify(){if('Notification' in window)Notification.requestPermission();}
+document.querySelectorAll('.tabs button').forEach(b=>b.onclick=()=>{document.querySelectorAll('.tabs button').forEach(x=>x.classList.remove('active'));b.classList.add('active');filter=b.dataset.f;draw()});
+q.oninput=draw;s.onchange=draw;load();setInterval(load,15000);
+</script></body></html>
