@@ -1,40 +1,334 @@
 <!doctype html>
-<html lang="bn"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<meta name="theme-color" content="#07101d"><link rel="manifest" href="/manifest.json"><title>Live Market Dashboard</title>
+<html lang="bn">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#07101d">
+<link rel="manifest" href="/manifest.json">
+<title>Live Market Dashboard</title>
+
 <style>
-*{box-sizing:border-box}body{margin:0;background:#07101d;color:#eaf1fb;font-family:Arial,sans-serif}
-header{position:sticky;top:0;background:#0b1728;border-bottom:1px solid #223650;padding:14px;z-index:5}
-h1{font-size:20px;margin:0}.sub{font-size:11px;color:#8da2bd;margin-top:4px}.wrap{max-width:1200px;margin:auto;padding:12px}
-.controls{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px}input,select,button{background:#0d1b2f;color:#eaf1fb;border:1px solid #29405e;border-radius:9px;padding:10px}
-input{flex:1;min-width:180px}button{cursor:pointer}.tabs{display:flex;gap:7px;overflow:auto;margin-bottom:12px}.active{background:#2563eb}
-.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(290px,1fr));gap:10px}.card{background:#0c182a;border:1px solid #203550;border-radius:12px;padding:13px}
-.row{display:flex;justify-content:space-between;gap:8px}.muted{color:#8da2bd;font-size:11px}.title{font-weight:700;margin:9px 0;line-height:1.35}
-.green{color:#32d583}.red{color:#ff637b}.yellow{color:#ffd166}.pill{font-size:10px;background:#17304d;border-radius:6px;padding:4px 7px}
-.status{font-size:12px;margin:8px 0 12px}.empty{padding:35px;text-align:center;color:#8da2bd;border:1px dashed #29405e;border-radius:12px}
-</style></head>
-<body>
-<header><h1>📡 LIVE MARKET DASHBOARD</h1><div class="sub">Live News • Price • Volume • Scanner</div></header>
-<div class="wrap">
-<div class="controls"><input id="q" placeholder="Search stock / news…"><select id="s"><option value="all">All</option><option value="positive">🟢 Positive</option><option value="negative">🔴 Negative</option><option value="neutral">🟡 Neutral</option></select><button onclick="load()">↻ Refresh</button><button onclick="notify()">🔔 Alerts</button></div>
-<div class="tabs"><button class="active" data-f="all">ALL</button><button data-f="breaking">🚨 BREAKING</button><button data-f="positive">🟢 POSITIVE</button><button data-f="negative">🔴 NEGATIVE</button></div>
-<div id="status" class="status muted">Connecting to live backend…</div><div id="news" class="grid"></div>
-<p class="muted">Live mode requires a backend with licensed market/news API credentials. Demo mode is shown until the backend is connected.</p>
-</div>
-<script>
-let filter='all', cache=[];
-const demo=[
-{stock:'HINDALCO',title:'New order / contract announcement',source:'Demo Feed',time:'10:42',sent:'positive',type:'breaking',move:'+2.15%',vol:'+184%'},
-{stock:'TATA MOTORS',title:'Company announcement and market update',source:'Demo Feed',time:'10:38',sent:'positive',type:'positive',move:'+1.42%',vol:'+96%'},
-{stock:'ABC LTD',title:'Regulatory development reported',source:'Demo Feed',time:'10:31',sent:'negative',type:'negative',move:'-3.10%',vol:'+240%'}
-];
-function draw(){
-let q=document.getElementById('q').value.toLowerCase(),s=document.getElementById('s').value;
-let a=(cache.length?cache:demo).filter(x=>(filter==='all'||x.type===filter)&&(s==='all'||x.sent===s)&&((x.stock+x.title).toLowerCase().includes(q)));
-document.getElementById('news').innerHTML=a.length?a.map(x=>`<article class="card"><div class="row"><b>${x.stock}</b><span class="pill">${x.time||''}</span></div><div class="title">${x.title}</div><div class="muted">${x.source||''} • <span class="${x.sent==='positive'?'green':x.sent==='negative'?'red':'yellow'}">${(x.sent||'neutral').toUpperCase()}</span></div><div class="row" style="margin-top:11px"><span>Price <b class="${(x.move||'')[0]=='+'?'green':'red'}">${x.move||'—'}</b></span><span>Volume <b>${x.vol||'—'}</b></span></div></article>`).join(''):'<div class="empty">কোনো খবর পাওয়া যায়নি।</div>';
+*{box-sizing:border-box}
+body{
+  margin:0;
+  background:#07101d;
+  color:#eaf1fb;
+  font-family:Arial,sans-serif
 }
-async function load(){
-try{let r=await fetch('/api/dashboard');if(!r.ok)throw 0;let d=await r.json();cache=d.news||[];document.getElementById('status').textContent='🟢 LIVE • Updated '+new Date().toLocaleTimeString();}catch(e){cache=[];document.getElementById('status').textContent='🟡 Demo mode • Live API/backend not connected';}draw();}
-function notify(){if('Notification' in window)Notification.requestPermission();}
-document.querySelectorAll('.tabs button').forEach(b=>b.onclick=()=>{document.querySelectorAll('.tabs button').forEach(x=>x.classList.remove('active'));b.classList.add('active');filter=b.dataset.f;draw()});
-q.oninput=draw;s.onchange=draw;load();setInterval(load,15000);
-</script></body></html>
+header{
+  position:sticky;
+  top:0;
+  z-index:5;
+  background:#0b1728;
+  border-bottom:1px solid #223650;
+  padding:14px
+}
+h1{
+  font-size:20px;
+  margin:0
+}
+.sub{
+  font-size:11px;
+  color:#8da2bd;
+  margin-top:4px
+}
+.wrap{
+  max-width:1300px;
+  margin:auto;
+  padding:12px
+}
+.controls{
+  display:flex;
+  gap:8px;
+  flex-wrap:wrap;
+  margin-bottom:12px
+}
+input,select,button{
+  background:#0d1b2f;
+  color:#eaf1fb;
+  border:1px solid #29405e;
+  border-radius:8px;
+  padding:10px
+}
+input{
+  flex:1;
+  min-width:220px
+}
+button{
+  cursor:pointer
+}
+.tabs{
+  display:flex;
+  gap:7px;
+  overflow:auto;
+  margin-bottom:12px
+}
+.tabs button.active{
+  background:#2563eb
+}
+.grid{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(290px,1fr));
+  gap:10px
+}
+.card{
+  background:#0c182a;
+  border:1px solid #203550;
+  border-radius:12px;
+  padding:13px
+}
+.row{
+  display:flex;
+  justify-content:space-between;
+  gap:8px
+}
+.muted{
+  color:#8da2bd;
+  font-size:11px
+}
+.title{
+  font-weight:700;
+  margin:9px 0;
+  line-height:1.35
+}
+.green{color:#32d583}
+.red{color:#ff637b}
+.yellow{color:#ffd166}
+.price{
+  font-size:22px;
+  font-weight:700
+}
+.status{
+  font-size:12px;
+  margin:8px 0 12px;
+  padding:10px;
+  text-align:center;
+  color:#8da2bd;
+  border:1px dashed #29405e;
+  border-radius:10px
+}
+.badge{
+  display:inline-block;
+  padding:4px 7px;
+  border-radius:6px;
+  font-size:10px;
+  background:#17304d
+}
+</style>
+</head>
+
+<body>
+
+<header>
+  <h1>📈 LIVE MARKET DASHBOARD</h1>
+  <div class="sub">Live Price • Volume • Change • Market Scanner</div>
+</header>
+
+<div class="wrap">
+
+  <div class="controls">
+    <input id="q" placeholder="Search stock...">
+    
+    <select id="s">
+      <option value="all">All</option>
+      <option value="positive">Positive</option>
+      <option value="negative">Negative</option>
+    </select>
+
+    <button id="refresh">🔄 Refresh</button>
+  </div>
+
+  <div class="tabs">
+    <button class="active" data-f="all">ALL</button>
+    <button data-f="positive">🟢 POSITIVE</button>
+    <button data-f="negative">🔴 NEGATIVE</button>
+  </div>
+
+  <div id="status" class="status">
+    Connecting to Dhan live market data...
+  </div>
+
+  <div id="news" class="grid"></div>
+
+</div>
+
+<script>
+
+let filter = "all";
+let cache = [];
+
+const q = document.getElementById("q");
+const s = document.getElementById("s");
+const refresh = document.getElementById("refresh");
+const statusBox = document.getElementById("status");
+const news = document.getElementById("news");
+
+async function loadData(){
+
+  statusBox.textContent = "⏳ Loading live market data...";
+
+  try{
+
+    const response = await fetch("/api/dashboard",{
+      cache:"no-store"
+    });
+
+    if(!response.ok){
+      throw new Error("Backend error");
+    }
+
+    const data = await response.json();
+
+    cache = data.stocks || [];
+
+    statusBox.textContent =
+      "🟢 " +
+      (data.status || "Live backend connected") +
+      " • Updated " +
+      new Date().toLocaleTimeString();
+
+    draw();
+
+  }catch(error){
+
+    console.error(error);
+
+    statusBox.textContent =
+      "🔴 Live data connection failed. Please refresh.";
+
+    news.innerHTML = `
+      <div class="card">
+        <div class="title">No live market data</div>
+        <div class="muted">
+          Dhan backend data পাওয়া যাচ্ছে না।
+        </div>
+      </div>
+    `;
+  }
+}
+
+function draw(){
+
+  const search = q.value.toLowerCase();
+  const selectFilter = s.value;
+
+  let data = cache.filter(x => {
+
+    const symbol = String(x.symbol || "").toLowerCase();
+
+    const matchesSearch =
+      !search ||
+      symbol.includes(search) ||
+      String(x.name || "").toLowerCase().includes(search);
+
+    const change = Number(x.change_percent || 0);
+
+    const matchesSelect =
+      selectFilter === "all" ||
+      (selectFilter === "positive" && change > 0) ||
+      (selectFilter === "negative" && change < 0);
+
+    const matchesTab =
+      filter === "all" ||
+      (filter === "positive" && change > 0) ||
+      (filter === "negative" && change < 0);
+
+    return matchesSearch && matchesSelect && matchesTab;
+  });
+
+  if(!data.length){
+
+    news.innerHTML = `
+      <div class="card">
+        <div class="title">No stocks found</div>
+        <div class="muted">
+          Search বা filter পরিবর্তন করুন।
+        </div>
+      </div>
+    `;
+
+    return;
+  }
+
+  news.innerHTML = data.map(x => {
+
+    const change = Number(x.change_percent || 0);
+    const cls = change >= 0 ? "green" : "red";
+    const arrow = change >= 0 ? "▲" : "▼";
+
+    const price =
+      x.price !== undefined
+      ? Number(x.price).toFixed(2)
+      : "-";
+
+    const volume =
+      x.volume !== undefined
+      ? Number(x.volume).toLocaleString("en-IN")
+      : "-";
+
+    return `
+      <div class="card">
+
+        <div class="row">
+          <div>
+            <div class="badge">${x.exchange || "NSE"}</div>
+            <div class="title">${x.symbol || "-"}</div>
+          </div>
+
+          <div class="price">
+            ₹${price}
+          </div>
+        </div>
+
+        <div class="row">
+
+          <div class="${cls}">
+            ${arrow} ${change.toFixed(2)}%
+          </div>
+
+          <div class="muted">
+            Volume: ${volume}
+          </div>
+
+        </div>
+
+        <div class="muted" style="margin-top:10px">
+          ${x.name || "Live Market Data"}
+        </div>
+
+      </div>
+    `;
+
+  }).join("");
+}
+
+q.addEventListener("input",draw);
+s.addEventListener("change",draw);
+
+document.querySelectorAll(".tabs button").forEach(btn => {
+
+  btn.addEventListener("click",()=>{
+
+    document.querySelectorAll(".tabs button")
+      .forEach(b => b.classList.remove("active"));
+
+    btn.classList.add("active");
+
+    filter = btn.dataset.f;
+
+    draw();
+
+  });
+
+});
+
+refresh.addEventListener("click",loadData);
+
+loadData();
+
+setInterval(loadData,30000);
+
+</script>
+
+</body>
+</html>
