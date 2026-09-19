@@ -1,0 +1,9 @@
+{
+  "name": "Live Market Dashboard",
+  "short_name": "Market Live",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#07111f",
+  "theme_color": "#07111f",
+  "description": "Live Market News, Price, Volume and Scanner Dashboard"
+}
